@@ -1,6 +1,31 @@
 @ToDoList_HostAddress = http://localhost:5180
 
-GET {{ToDoList_HostAddress}}/weatherforecast/
+GET {{TodoList_HostAddress}}/api/Todo
 Accept: application/json
+
+###
+
+GET {{TodoList_HostAddress}}/api/Todo/5
+Accept: application/json
+
+###
+
+POST {{TodoList_HostAddress}}/api/Todo
+Content-Type: application/json
+{
+  "Task": "更新文件"
+}
+
+###
+
+PUT {{TodoList_HostAddress}}/api/Todo/5
+Content-Type: application/json
+{
+  "Task": "更新開發文件"
+}
+
+###
+
+DELETE {{TodoList_HostAddress}}/api/Todo/5
 
 ###
