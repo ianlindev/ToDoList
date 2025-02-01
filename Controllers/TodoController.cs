@@ -28,13 +28,13 @@ public class TodoController : ControllerBase
     public async Task<ActionResult<IEnumerable<TodoSelectDto>>> GetTodo()
     {
         _logger.LogInformation("Get all todos");
-        return await _context.Todo.Select(x => new TodoSelectDto
+        return Ok(await _context.Todo.Select(x => new TodoSelectDto
         {
             Id = x.Id,
             Task = x.Task,
             CreatedAt = x.CreatedAt,
             IsComplete = x.IsComplete
-        }).ToListAsync();
+        }).ToListAsync());
     }
 
     /// <summary>
@@ -143,5 +143,4 @@ public class TodoController : ControllerBase
 
         return NoContent();
     }
-
 }

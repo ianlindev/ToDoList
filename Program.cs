@@ -1,33 +1,34 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+ï»¿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Filters;
 using System.Text;
 using ToDoList.Models.EFModel;
+using ToDoList.Models.Filters;
 using ToDoList.Models.Helpers.Implement;
 using ToDoList.Models.Helpers.Interface;
 using ToDoList.Models.Service.Implement;
 using ToDoList.Models.Service.Interface;
 
-//¨ú±o²ÕºA³]©wÀÉ
+//å–å¾—çµ„æ…‹è¨­å®šæª”
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-//Logªì©l¤Æ (®·®»host±Ò°Êªº¿ù»~)
+//Logåˆå§‹åŒ– (æ•æ‰hostå•Ÿå‹•çš„éŒ¯èª¤)
 Log.Logger = new LoggerConfiguration()
-    .Enrich.FromLogContext()//Åılog°T®§¦hÅã¥Ü¤@ÂI
-    .ReadFrom.Configuration(configuration)// ±q³]©wÀÉ¤¤Åª¨ú
+    .Enrich.FromLogContext()//è®“logè¨Šæ¯å¤šé¡¯ç¤ºä¸€é»
+    .ReadFrom.Configuration(configuration)// å¾è¨­å®šæª”ä¸­è®€å–
     .CreateLogger();
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Serilog ¨â¶¥¬qªì©l¤Æ
+    // Serilog å…©éšæ®µåˆå§‹åŒ–
     builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)// ±q³]©wÀÉ¤¤Åª¨ú
+        .ReadFrom.Configuration(context.Configuration)// å¾è¨­å®šæª”ä¸­è®€å–
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
         .Filter.ByExcluding(Matching.FromSource("Microsoft"))
@@ -39,60 +40,66 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // µù¥U DbContext
+    // è¨»å†Š DbContext
     builder.Services.AddDbContext<ToDoListContext>(
         options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-    // µù¥U TokenValidationParameters
+    // è¨»å†Š TokenValidationParameters
     var tokenValidationParameters = new TokenValidationParameters
     {
-        // ³z¹L³o¶µ«Å§i¡A´N¥i¥H±q "sub" ¨ú­È¨Ã³]©wµ¹ User.Identity.Name
+        // é€éé€™é …å®£å‘Šï¼Œå°±å¯ä»¥å¾ "sub" å–å€¼ä¸¦è¨­å®šçµ¦ User.Identity.Name
         NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
-        // ³z¹L³o¶µ«Å§i¡A´N¥i¥H±q "roles" ¨ú­È¡A¨Ã¤¹³\Åı [Authorize] §PÂ_¨¤¦â
+        // é€éé€™é …å®£å‘Šï¼Œå°±å¯ä»¥å¾ "roles" å–å€¼ï¼Œä¸¦å…è¨±è®“ [Authorize] åˆ¤æ–·è§’è‰²
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
         ClockSkew = TimeSpan.Zero,
-        // ÅçÃÒ Issuer
+        // é©—è­‰ Issuer
         ValidateIssuer = true,
         ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"),
 
-        // ³q±`¤£¤Ó»İ­nÅçÃÒ Audience
+        // é€šå¸¸ä¸å¤ªéœ€è¦é©—è­‰ Audience
         ValidateAudience = false,
 
-        // ÅçÃÒ Token ªº¦³®Ä´Á¶¡
+        // é©—è­‰ Token çš„æœ‰æ•ˆæœŸé–“
         ValidateLifetime = true,
 
-        // ¦pªG Token ¤¤¥]§t key ¤~»İ­nÅçÃÒ¡A¤@¯ë³£¥u¦³Ã±³¹¦Ó¤w
+        // å¦‚æœ Token ä¸­åŒ…å« key æ‰éœ€è¦é©—è­‰ï¼Œä¸€èˆ¬éƒ½åªæœ‰ç°½ç« è€Œå·²
         ValidateIssuerSigningKey = true,
 
-        // KeyÀ³¸Ó±q IConfiguration ¨ú±o
+        // Keyæ‡‰è©²å¾ IConfiguration å–å¾—
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey")!))
     };
 
-    // µù¥U TokenValidationParameters
+    // è¨»å†Š TokenValidationParameters
     builder.Services.AddSingleton(tokenValidationParameters);
 
-    // µù¥U JWT ³]©w
+    // è¨»å†Š JWT è¨­å®š
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            // ·íÅçÃÒ¥¢±Ñ®É¡A¦^À³¼ĞÀY·|¥]§t WWW-Authenticate ¼ĞÀY¡A³o¸Ì·|Åã¥Ü¥¢±Ñªº¸Ô²Ó¿ù»~­ì¦]
-            options.IncludeErrorDetails = true; // ¹w³]­È¬° true¡A¦³®É·|¯S§OÃö³¬
+            // ç•¶é©—è­‰å¤±æ•—æ™‚ï¼Œå›æ‡‰æ¨™é ­æœƒåŒ…å« WWW-Authenticate æ¨™é ­ï¼Œé€™è£¡æœƒé¡¯ç¤ºå¤±æ•—çš„è©³ç´°éŒ¯èª¤åŸå› 
+            options.IncludeErrorDetails = true; // é è¨­å€¼ç‚º trueï¼Œæœ‰æ™‚æœƒç‰¹åˆ¥é—œé–‰
 
             options.TokenValidationParameters = tokenValidationParameters;
         });
 
-    //JWT Helpers »İ­n¥Î¨ì tokenValidationParameters ª`¤J
+    //JWT Helpers éœ€è¦ç”¨åˆ° tokenValidationParameters æ³¨å…¥
     builder.Services.AddSingleton(tokenValidationParameters);
 
-    // µù¥U±ÂÅvªA°È
+    // è¨»å†Šæˆæ¬Šæœå‹™
     builder.Services.AddAuthorization();
 
-    // µù¥U JwtHelpers
+    // è¨»å†Š JwtHelpers
     builder.Services.AddSingleton<IJwtHelpers, JwtHelpers>();
 
-    // µù¥U EncryptionService
+    // è¨»å†Š EncryptionService
     builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+
+    // è¨»å†Š å…¨åŸŸ API è¼¸å‡ºæ ¼å¼ Filter
+    builder.Services.AddMvc(options =>
+    {
+        options.Filters.Add<ApiResponseFilter>();
+    });
 
     var app = builder.Build();
 
