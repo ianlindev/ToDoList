@@ -13,10 +13,43 @@ public partial class ToDoListContext : DbContext
     {
     }
 
+    public virtual DbSet<Account> Account { get; set; }
+
+    public virtual DbSet<RefreshTokens> RefreshTokens { get; set; }
+
     public virtual DbSet<Todo> Todo { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Account>(entity =>
+        {
+            entity.Property(e => e.CreatedAt)
+                .HasPrecision(0)
+                .HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Email)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.UserName)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<RefreshTokens>(entity =>
+        {
+            entity.Property(e => e.AddedDate).HasColumnType("datetime");
+            entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
+            entity.Property(e => e.JwtId)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.Token)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsFixedLength();
+        });
+
         modelBuilder.Entity<Todo>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_TodoList");
