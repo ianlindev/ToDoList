@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Filters;
+using System;
 using System.Text;
 using ToDoList.Models.EFModel;
 using ToDoList.Models.Filters;
@@ -11,9 +12,11 @@ using ToDoList.Models.Helpers.Interface;
 using ToDoList.Models.Service.Implement;
 using ToDoList.Models.Service.Interface;
 
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
 //取得組態設定檔
 var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
     .Build();
 
 //Log初始化 (捕捉host啟動的錯誤)
